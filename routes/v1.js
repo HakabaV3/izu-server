@@ -29,6 +29,5 @@ router.use(function(req, res, next) {
 });
 
 router.use('/user', userRouter);
-router.use('/score', scoreRouter);
 
 module.exports = router;

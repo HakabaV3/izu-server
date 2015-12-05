@@ -13,5 +13,8 @@ module.exports = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  uuid: String
+  uuid: String,
+  name: String,
+  email: String,
+  password: String
 });
