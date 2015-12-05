@@ -13,4 +13,13 @@ middleware.render = function(req, res, next) {
   });
 };
 
+middleware.renderAuth = function(req, res, next) {
+  User.model.toObjectAuth(req.session.auth, req.session.user, function(err, user) {
+    if (err) {
+      return res.ng({error: err});
+    }
+    return res.ok(user);
+  });
+};
+
 module.exports = middleware;

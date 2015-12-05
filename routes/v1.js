@@ -1,7 +1,7 @@
 var express = require('express'),
   router = express.Router(),
-  userRouter = require('./user'),
-  scoreRouter = require('./score');
+  authRouter = require('./auth'),
+  userRouter = require('./user');
 
 express.response.ok = function(result) {
   return this.json({
@@ -22,12 +22,13 @@ router.use(function(req, res, next) {
   res.set({
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'X-Token',
+    'Access-Control-Allow-Headers': 'X-Session-Token',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE'
   });
   next();
 });
 
+router.use('/auth', authRouter);
 router.use('/user', userRouter);
 
 module.exports = router;

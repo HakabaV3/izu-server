@@ -1,4 +1,5 @@
-var mongoose = require('../model/db.js');
+var mongoose = require('../model/db.js'),
+  uuid = require('node-uuid');
 
 module.exports = new mongoose.Schema({
   created: {
@@ -13,8 +14,19 @@ module.exports = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  uuid: String,
-  name: String,
-  email: String,
-  password: String
+  uuid: {
+    type: String,
+    default: uuid.v4()
+  },
+  name: {
+    type: String,
+    required: true,
+    index: {
+      unique:true
+    }
+  },
+  password: {
+    type: String,
+    required: true
+  }
 });
