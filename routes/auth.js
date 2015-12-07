@@ -12,28 +12,23 @@ var express = require('express'),
 /*
  * token String
  */
-router.get('/me', Auth.middleware.findOne,
- function(req, res, next) {
-   User.model.findOne({uuid: req.session.auth.userId}, function(err, user) {
-     if (err) {
-       return res.ng({error: err});
-     }
-     req.session.user = user;
-     next();
-   });
-  }, User.middleware.renderAuth);
+router.get('/me',
+  Auth.middleware.findOne,
+  User.middleware.findOneByAuth,
+  User.middleware.renderAuth
+);
 
 /*
  * userName String
  * password String
  */
-router.post('', function(req, res, next) {
+router.post('/', User.middleware.findOneByNameAndPassword,
+  function(req, res, next) {
   User.model.findOne({name: req.body.name, password: User.model.toHashedPassword(req.body.password)},{}, function(err, user) {
     if (err) {
       return res.ng({error: err});
     }
-    req.session.user = user;
-    Auth.model.findOneAndUpdate({userId: user.uuid}, {$set: {token: Auth.model.createToken()}}, function(err, auth) {
+    Auth.model.findOneAndUpdate({userId: req.session.user.uuid}, {$set: {token: Auth.model.createToken()}}, function(err, auth) {
       if (err) {
         return res.ng({error: err});
       }

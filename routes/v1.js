@@ -1,7 +1,8 @@
 var express = require('express'),
   router = express.Router(),
   authRouter = require('./auth'),
-  userRouter = require('./user');
+  userRouter = require('./user'),
+  planRouter = require('./plan');
 
 express.response.ok = function(result) {
   return this.json({
@@ -30,5 +31,6 @@ router.use(function(req, res, next) {
 
 router.use('/auth', authRouter);
 router.use('/user', userRouter);
+router.use('/plan', planRouter);
 
 module.exports = router;
