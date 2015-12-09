@@ -2,7 +2,8 @@ var express = require('express'),
   router = express.Router(),
   authRouter = require('./v1/auth'),
   userRouter = require('./v1/user'),
-  planRouter = require('./v1/plan');
+  planRouter = require('./v1/plan'),
+  photoRouter = require('./v1/photo');
 
 express.response.ok = function(code, result) {
   return this.json({
@@ -32,5 +33,12 @@ router.use(function(req, res, next) {
 router.use('/auth', authRouter);
 router.use('/user', userRouter);
 router.use('/plan', planRouter);
+router.use('/plan/:userName/:planId/photo', [
+  function(req, res, next) {
+    req.session.planId = req.params.planId;
+    next();
+  },
+  photoRouter
+]);
 
 module.exports = router;
