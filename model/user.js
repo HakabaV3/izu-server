@@ -18,6 +18,17 @@ model.toObject = function(user, callback) {
   });
 };
 
+model.toObjectAll = function(users, callback) {
+  return callback(null, users.map(function(user) {
+    return {
+      uuid: user.uuid,
+      name: user.name,
+      created: user.created,
+      updated: user.updated
+    };
+  }));
+};
+
 model.toObjectAuth = function(auth, user, callback) {
   return callback(null, {
     uuid: user.uuid,

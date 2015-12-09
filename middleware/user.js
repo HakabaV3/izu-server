@@ -5,7 +5,10 @@ var User = {
   middleware = {};
 
 middleware.findOneByAuth = function(req, res, next) {
-  User.model.findOne({uuid: req.session.auth.userId}, {}, function(err, user) {
+  User.model.findOne({
+    uuid: req.session.auth.userId,
+    deleted: false
+  }, {}, function(err, user) {
     if (err) {
       return res.ng({error: err});
     }
@@ -19,7 +22,10 @@ middleware.findOneByAuth = function(req, res, next) {
 
 middleware.findOneByName = function(req, res, next) {
   var name = req.params.name || req.session.name;
-  User.model.findOne({name: req.params.name}, {}, function(err, user){
+  User.model.findOne({
+    name: req.params.name,
+    deleted: false
+  }, {}, function(err, user){
     if (err) {
       return res.ng({error: err});
     }
@@ -34,8 +40,11 @@ middleware.findOneByName = function(req, res, next) {
 middleware.findOneByNameAndPassword = function(req, res, next) {
   var name = req.body.name,
     password = User.model.toHashedPassword(req.body.password);
-  console.log(req.body);
-  User.model.findOne({name: name, password: password}, {}, function(err, user) {
+  User.model.findOne({
+    name: name,
+    password: password,
+    deleted: false
+  }, {}, function(err, user) {
     if (err) {
       return res.ng({error: err});
     }
@@ -52,7 +61,16 @@ middleware.render = function(req, res, next) {
     if (err) {
       return res.ng({error: err});
     }
-    return res.ok(user);
+    return res.ok({user: user});
+  });
+};
+
+middleware.renderAll = function(req, res, next) {
+  User.model.toObjectAll(req.session.users, function(err, users) {
+    if (err) {
+      return res.ng({error: err});
+    }
+    return res.ok({users: users});
   });
 };
 
@@ -61,7 +79,7 @@ middleware.renderAuth = function(req, res, next) {
     if (err) {
       return res.ng({error: err});
     }
-    return res.ok(user);
+    return res.ok({user: user});
   });
 };
 
