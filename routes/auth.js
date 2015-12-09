@@ -28,7 +28,7 @@ router.post('/', User.middleware.findOneByNameAndPassword,
     if (err) {
       return res.ng(400, {error: err});
     }
-    Auth.model.findOneAndUpdate({userId: req.session.user.uuid}, {$set: {token: Auth.model.createToken()}}, function(err, auth) {
+    Auth.model.findOneAndUpdate({userId: req.session.user.uuid}, {$set: {token: Auth.model.createToken()}}, {new: true}, function(err, auth) {
       if (err) {
         return res.ng(400, {error: err});
       }

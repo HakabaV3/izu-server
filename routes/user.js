@@ -72,7 +72,7 @@ router.patch('/:name',
       if (name) { updateValue.name = name }
       if (password) { updateValue.password = User.model.toHashedPassword(password) }
 
-      User.model.findOneAndUpdate({name: req.params.name}, {$set: updateValue}, function(err, updatedUser) {
+      User.model.findOneAndUpdate({name: req.params.name}, {$set: updateValue}, {new: true}, function(err, updatedUser) {
         if (err) {
           return res.ng(400, {error: err});
         }
@@ -101,6 +101,8 @@ router.delete('/:name',
         updated: new Date(),
         deleted: true
       }
+    },{
+      new: true
     }, function(err) {
       if (err) {
         return res.ng(400, {error: err});
