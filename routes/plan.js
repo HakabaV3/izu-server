@@ -14,24 +14,48 @@ var express = require('express'),
   router = express.Router();
 
 /*
+ * GET /api/v1/plan
+ */
+router.get('/',
+  function(req, res, next) {
+    req.session.query = {
+      deleted: false
+    };
+    req.session.option = {
+      sort: {
+        created: 'desc'
+      }
+    };
+    next();
+  },
+  Plan.middleware.find,
+  Plan.middleware.renderAll
+);
+
+/*
  * GET /api/v1/plan/:userName
  */
 router.get('/:name',
   User.middleware.findOneByName,
   function(req, res, next) {
-    Plan.model.find({owner: req.params.name}, {}, {sort: {created: 'desc'}}, function(err, plans) {
-      if (err) {
-        return res.ng(400, {error: err});
+    req.session.query = {
+      deleted: false,
+      owner: req.params.name
+    };
+    req.session.option = {
+      sort: {
+        created: 'desc'
       }
-      req.session.plans = plans;
-      next();
-    });
-  }, Plan.middleware.renderAll);
+    };
+    next();
+  },
+  Plan.middleware.find,
+  Plan.middleware.renderAll
+);
 
 /*
  * POST /api/v1/plan (private)
  * title String
- * token String
  */
 router.post('/',
   Auth.middleware.findOne,
@@ -49,6 +73,54 @@ router.post('/',
       req.session.plan = createdPlan;
       next();
     });
-  }, Plan.middleware.render);
+  },
+  Plan.middleware.render
+);
+
+/*
+ * PATCH /api/v1/plan/:userName/:planId (private)
+ * title Sring
+ */
+router.patch('/:name/:id',
+  Auth.middleware.findOne,
+  User.middleware.findOneByAuth,
+  function(req, res, next) {
+    var title = req.body.title,
+      updateValue = {
+        updated: new Date()
+      };
+
+    if (title) { updateValue.title = title }
+
+    Plan.model.findOneAndUpdate({uuid: req.params.id}, {$set: updateValue}, {new: true}, function(err, updatedPlan) {
+      if (err) {
+        return res.ng(400, {error: err});
+      }
+      if (!updatedPlan) {
+        return res.ng(404, {error: 'NOT_FOUND'});
+      }
+      
+      req.session.plan = updatedPlan;
+      next();
+    });
+  },
+  Plan.middleware.render
+);
+
+/*
+ * DELETE /api/v1/plan/:userName/:planId (private)
+ */
+router.delete('/:name/:id',
+  Auth.middleware.findOne,
+  User.middleware.findOneByAuth,
+  function(req, res, next) {
+    Plan.model.remove({uuid: req.params.id}, function(err) {
+      if (err) {
+        return res.ng(400, {error: err});
+      }
+      return  res.ok(201, {});
+    });
+  }
+);
 
 module.exports = router;
