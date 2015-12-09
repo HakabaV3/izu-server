@@ -4,16 +4,16 @@ var express = require('express'),
   userRouter = require('./user'),
   planRouter = require('./plan');
 
-express.response.ok = function(result) {
+express.response.ok = function(code, result) {
   return this.json({
-    status: 'OK',
+    status: code,
     result: result || {}
   });
 };
 
-express.response.ng = function(result) {
+express.response.ng = function(code, result) {
   return this.json({
-    status: 'NG',
+    status: code,
     result: result || {}
   });
 };

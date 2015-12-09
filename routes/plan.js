@@ -21,7 +21,7 @@ router.get('/:name',
   function(req, res, next) {
     Plan.model.find({owner: req.params.name}, {}, {sort: {created: 'desc'}}, function(err, plans) {
       if (err) {
-        return res.ng({error: err});
+        return res.ng(400, {error: err});
       }
       req.session.plans = plans;
       next();
@@ -44,7 +44,7 @@ router.post('/',
     })
     .save(function(err, createdPlan) {
       if (err) {
-        return res.ng({error: err});
+        return res.ng(400, {error: err});
       }
       req.session.plan = createdPlan;
       next();

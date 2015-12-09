@@ -10,10 +10,10 @@ middleware.findOneByAuth = function(req, res, next) {
     deleted: false
   }, {}, function(err, user) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
     if (!user) {
-      return res.ng({error: 'NOT_FOUND'});
+      return res.ng(404, {error: 'NOT_FOUND'});
     }
     req.session.user = user;
     next();
@@ -27,10 +27,10 @@ middleware.findOneByName = function(req, res, next) {
     deleted: false
   }, {}, function(err, user){
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
     if (!user) {
-      return res.ng({error: 'NOT_FOUND'});
+      return res.ng(404, {error: 'NOT_FOUND'});
     }
     req.session.user = user;
     next();
@@ -46,10 +46,10 @@ middleware.findOneByNameAndPassword = function(req, res, next) {
     deleted: false
   }, {}, function(err, user) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
     if (!user) {
-      return res.ng({error: 'NOT_FOUND'});
+      return res.ng(404, {error: 'NOT_FOUND'});
     }
     req.session.user = user;
     next();
@@ -59,27 +59,27 @@ middleware.findOneByNameAndPassword = function(req, res, next) {
 middleware.render = function(req, res, next) {
   User.model.toObject(req.session.user, function(err, user) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
-    return res.ok({user: user});
+    return res.ok(200, {user: user});
   });
 };
 
 middleware.renderAll = function(req, res, next) {
   User.model.toObjectAll(req.session.users, function(err, users) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
-    return res.ok({users: users});
+    return res.ok(200, {users: users});
   });
 };
 
 middleware.renderAuth = function(req, res, next) {
   User.model.toObjectAuth(req.session.auth, req.session.user, function(err, user) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
-    return res.ok({user: user});
+    return res.ok(200, {user: user});
   });
 };
 

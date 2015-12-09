@@ -7,18 +7,18 @@ var Plan = {
 middleware.render = function(req, res, next) {
   Plan.model.toObject(req.session.plan, function(err, plan) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
-    return res.ok(plan);
+    return res.ok(200, plan);
   });
 };
 
 middleware.renderAll = function(req, res, next) {
   Plan.model.toObjectAll(req.session.plans, function(err, plans) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
-    return res.ok(plans);
+    return res.ok(200, plans);
   });
 };
 

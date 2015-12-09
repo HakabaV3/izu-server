@@ -12,13 +12,13 @@ var express = require('express'),
 /*
  * GET /api/v1/user
  */
-router.get('', function(req, res, next) {
-  User.model.find({}, function(err, users) {
+router.get('/', function(req, res, next) {
+  User.model.find({deleted: false}, function(err, users) {
     if (err) {
-      return res.ng({error: err});
+      return res.ng(400, {error: err});
     }
-    if (!users) {
-      return res.ng({error: 'NOT_FOUND'});
+    if (!users || users.length == 0) {
+      return res.ng(404, {error: 'NOT_FOUND'});
     }
     req.session.users = users;
     next();
@@ -40,14 +40,14 @@ router.get('/:name',
  */
 router.post('/', function(req, res, next) {
   if (!req.body.password || !req.body.name) {
-    return res.ng({error: "PARAMETER_IS_INVALID"});
+    return res.ng(400, {error: "INVALID_PARAMETER"});
   }
   new User.model({
     name: req.body.name,
     password: User.model.toHashedPassword(req.body.password)
   })
   .save(function(err, createdUser) {
-    if (err) { return res.ng(err); }
+    if (err) { return res.ng(400, {error: err}); }
 
     req.session.user = createdUser;
     next();
@@ -74,10 +74,10 @@ router.patch('/:name',
 
       User.model.findOneAndUpdate({name: req.params.name}, {$set: updateValue}, function(err, updatedUser) {
         if (err) {
-          return res.ng({error: err});
+          return res.ng(400, {error: err});
         }
         if (!updatedUser) {
-          return res.ng({error: 'NOT_FOUND'});
+          return res.ng(404, {error: 'NOT_FOUND'});
         }
 
         req.session.user = updatedUser;
@@ -103,13 +103,13 @@ router.delete('/:name',
       }
     }, function(err) {
       if (err) {
-        return res.ng({error: err});
+        return res.ng(400, {error: err});
       }
       Auth.model.findOneAndRemove({uuid: req.session.auth.uuid}, function(err) {
         if (err) {
-          return res.ng({error: err});
+          return res.ng(400, {error: err});
         }
-        return res.ok();
+        return res.ok(201, {});
       });
     });
   }
