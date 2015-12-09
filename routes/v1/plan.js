@@ -1,15 +1,15 @@
 var express = require('express'),
   Auth = {
-    model: require('../model/auth.js'),
-    middleware: require('../middleware/auth.js')
+    model: require('../../model/auth.js'),
+    middleware: require('../../middleware/auth.js')
   },
   User = {
-    model: require('../model/user.js'),
-    middleware: require('../middleware/user.js')
+    model: require('../../model/user.js'),
+    middleware: require('../../middleware/user.js')
   },
   Plan = {
-    model: require('../model/plan.js'),
-    middleware: require('../middleware/plan.js')
+    model: require('../../model/plan.js'),
+    middleware: require('../../middleware/plan.js')
   },
   router = express.Router();
 
@@ -99,7 +99,7 @@ router.patch('/:name/:id',
       if (!updatedPlan) {
         return res.ng(404, {error: 'NOT_FOUND'});
       }
-      
+
       req.session.plan = updatedPlan;
       next();
     });

@@ -1,8 +1,8 @@
 var express = require('express'),
   router = express.Router(),
-  authRouter = require('./auth'),
-  userRouter = require('./user'),
-  planRouter = require('./plan');
+  authRouter = require('./v1/auth'),
+  userRouter = require('./v1/user'),
+  planRouter = require('./v1/plan');
 
 express.response.ok = function(code, result) {
   return this.json({

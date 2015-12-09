@@ -1,11 +1,11 @@
 var express = require('express'),
   Auth = {
-    model: require('../model/auth.js'),
-    middleware: require('../middleware/auth.js')
+    model: require('../../model/auth.js'),
+    middleware: require('../../middleware/auth.js')
   },
   User = {
-    model: require('../model/user.js'),
-    middleware: require('../middleware/user.js')
+    model: require('../../model/user.js'),
+    middleware: require('../../middleware/user.js')
   },
   router = express.Router();
 

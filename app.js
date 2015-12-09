@@ -8,6 +8,10 @@ var express = require('express'),
 
 var app = express();
 
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
+
 if (!fs.existsSync(__dirname+'/log')){
     fs.mkdirSync(__dirname+'/log');
 }
@@ -22,7 +26,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // set routing
-app.use('/api/v1', require('./routes/v1'));
+app.use('', require('./routes/root.js'));
+app.use('/api/v1', require('./routes/v1.js'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
