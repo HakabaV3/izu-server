@@ -24,7 +24,7 @@ router.use(function(req, res, next) {
   res.set({
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'X-Session-Token',
+    'Access-Control-Allow-Headers': 'X-Session-Token,Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE'
   });
   next();
