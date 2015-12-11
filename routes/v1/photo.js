@@ -11,6 +11,16 @@ var express = require('express'),
     model: require('../../model/photo.js'),
     middleware: require('../../middleware/photo.js')
   },
+  multer = require('multer'),
+  storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, './uploads/')
+    },
+    filename: function (req, file, cb) {
+      cb(null, Date.now() + '-' + file.originalname);
+    }
+  }),
+  uploader = multer({ storage: storage }),
   router = express.Router();
 
 /*
@@ -39,24 +49,13 @@ router.get('/',
 router.post('/',
   Auth.middleware.findOne,
   User.middleware.findOneByAuth,
-  function(req, res, next) {
-    new Photo.model({
-      planId: req.session.planId,
-      userId: req.session.user.uuid,
-      owner: req.session.user.name,
-      description: req.body.description,
-      date: req.body.date,
-      latitude: req.body.latitude,
-      longitude: req.body.longitude
-    })
-    .save(function(err, createdPhoto) {
-      if (err) {
-        return res.ng(400, {error: err});
-      }
-      req.session.photo = createdPhoto;
-      next();
-    });
-  },
+  uploader.fields([{
+      name: 'photo', maxCount: 1
+    }, {
+      name: 'detail', maxCount: 4
+    }
+  ]),
+  Photo.model.newObject,
   Photo.middleware.render
 );
 

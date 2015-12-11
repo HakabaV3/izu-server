@@ -30,6 +30,7 @@ module.exports = new mongoose.Schema({
   date: Number,
   latitude: Number,
   longitude: Number,
+  url: String,
   uuid: {
     type: String,
     default: uuid.v1()
