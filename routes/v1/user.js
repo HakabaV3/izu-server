@@ -7,6 +7,7 @@ var express = require('express'),
     model: require('../../model/auth.js'),
     middleware: require('../../middleware/auth.js')
   },
+  uuid = require('node-uuid'),
   router = express.Router();
 
 /*
@@ -43,6 +44,7 @@ router.post('/', function(req, res, next) {
     return res.ng(400, {error: "INVALID_PARAMETER"});
   }
   new User.model({
+    uuid: uuid.v4(),
     name: req.body.name,
     password: User.model.toHashedPassword(req.body.password)
   })
@@ -50,9 +52,19 @@ router.post('/', function(req, res, next) {
     if (err) { return res.ng(400, {error: err}); }
 
     req.session.user = createdUser;
-    next();
+    new Auth.model({
+      token: Auth.model.createToken(),
+      userId: createdUser.uuid
+    })
+    .save(function(err, createdAuth) {
+      if (err) {
+        return res.ng(400, {error: err});
+      }
+      req.session.auth = createdAuth;
+      next();
+    });
   });
-}, User.middleware.render);
+}, User.middleware.renderAuth);
 
 /*
  * PATCH /api/v1/user/:name (private)
@@ -66,7 +78,7 @@ router.patch('/:name',
     var name = req.body.name,
       password = req.body.password,
       updateValue = {
-        updated: new Date()
+        updated: parseInt(Date.now() / 1000)
       };
 
       if (name) { updateValue.name = name }

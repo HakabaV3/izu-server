@@ -1,14 +1,13 @@
-var mongoose = require('mongoose'),
-  uuid = require('node-uuid');
+var mongoose = require('mongoose');
 
 module.exports = new mongoose.Schema({
   created: {
-    type: Date,
-    default: Date.now
+    type: Number,
+    default: parseInt(Date.now() / 1000)
   },
   updated: {
-    type: Date,
-    default: Date.now
+    type: Number,
+    default: parseInt(Date.now() / 1000)
   },
   deleted: {
     type: Boolean,
@@ -31,8 +30,5 @@ module.exports = new mongoose.Schema({
   latitude: Number,
   longitude: Number,
   url: String,
-  uuid: {
-    type: String,
-    default: uuid.v1()
-  }
+  uuid: String
 });

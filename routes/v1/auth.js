@@ -13,7 +13,7 @@ var express = require('express'),
  * token String
  */
 router.get('/me',
-  Auth.middleware.findOne,
+  Auth.middleware.findOneAndUpdateToken,
   User.middleware.findOneByAuth,
   User.middleware.renderAuth
 );

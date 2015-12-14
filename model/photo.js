@@ -1,6 +1,7 @@
 var mongoose = require('./db.js'),
   constant = require('../config/constant.js'),
   schema = require('../schema/photo.js'),
+  uuid = require('node-uuid'),
   fs = require('fs');
 
 var model = mongoose.model('Photo', schema);
@@ -9,6 +10,7 @@ model.newObject = function(req, res, next) {
   var filePath = './' + req.files.detail[0].path,
     json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   new model({
+    uuid: uuid.v4(),
     planId: req.session.planId,
     userId: req.session.user.uuid,
     owner: req.session.user.name,

@@ -1,23 +1,19 @@
-var mongoose = require('../model/db.js'),
-  uuid = require('node-uuid');
+var mongoose = require('../model/db.js');
 
 module.exports = new mongoose.Schema({
   created: {
-    type: Date,
-    default: Date.now
+    type: Number,
+    default: parseInt(Date.now() / 1000)
   },
   updated: {
-    type: Date,
-    default: Date.now
+    type: Number,
+    default: parseInt(Date.now() / 1000)
   },
   deleted: {
     type: Boolean,
     default: false
   },
-  uuid: {
-    type: String,
-    default: uuid.v4()
-  },
+  uuid: String,
   name: {
     type: String,
     required: true,

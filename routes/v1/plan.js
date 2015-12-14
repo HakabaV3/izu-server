@@ -11,6 +11,7 @@ var express = require('express'),
     model: require('../../model/plan.js'),
     middleware: require('../../middleware/plan.js')
   },
+  uuid = require('node-uuid'),
   router = express.Router();
 
 /*
@@ -62,6 +63,7 @@ router.post('/',
   User.middleware.findOneByAuth,
   function(req, res, next) {
     new Plan.model({
+      uuid: uuid.v4(),
       title: req.body.title,
       owner: req.session.user.name,
       userId: req.session.user.uuid
@@ -87,7 +89,7 @@ router.patch('/:name/:id',
   function(req, res, next) {
     var title = req.body.title,
       updateValue = {
-        updated: new Date()
+        updated: parseInt(Date.now() / 1000)
       };
 
     if (title) { updateValue.title = title }

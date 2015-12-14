@@ -70,7 +70,7 @@ router.patch('/:photoId',
       longitude = req.body.longitude,
       description = req.body.description,
       updateValue = {
-        updated: new Date()
+        updated: parseInt(Date.now() / 1000)
       };
 
     if (latitude) { updateValue.latitude = latitude }
