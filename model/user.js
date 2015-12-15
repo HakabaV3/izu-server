@@ -11,7 +11,7 @@ model.toHashedPassword = function(password) {
 
 model.toObject = function(user, callback) {
   return callback(null, {
-    uuid: user.uuid,
+    id: user.uuid,
     name: user.name,
     created: user.created,
     updated: user.updated
@@ -21,7 +21,7 @@ model.toObject = function(user, callback) {
 model.toObjectAll = function(users, callback) {
   return callback(null, users.map(function(user) {
     return {
-      uuid: user.uuid,
+      id: user.uuid,
       name: user.name,
       created: user.created,
       updated: user.updated
@@ -31,7 +31,7 @@ model.toObjectAll = function(users, callback) {
 
 model.toObjectAuth = function(auth, user, callback) {
   return callback(null, {
-    uuid: user.uuid,
+    id: user.uuid,
     name: user.name,
     created: user.created,
     updated: user.updated,
