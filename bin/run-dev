@@ -1,0 +1,6 @@
+#!/bin/bash
+
+pm2 stop
+service mongod start --port 27017
+export $ENV=development
+pm2 start ./bin/www

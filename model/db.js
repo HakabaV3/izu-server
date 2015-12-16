@@ -1,10 +1,6 @@
-var mongoose = require('mongoose');
+var mongoose = require('mongoose'),
+	config = require('../config/config.js');
 
-var DB_HOST = 'localhost',
-  DB_PORT = process.env.DB_PORT | 27017,
-  DB_NAME = 'izu-server-dev',
-  DB_URL = 'mongodb://' + DB_HOST + ':' + DB_PORT + '/' + DB_NAME;
-
-mongoose.connect(DB_URL);
+mongoose.connect(`mongodb://${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}`);
 
 module.exports = mongoose;
