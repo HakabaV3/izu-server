@@ -3,7 +3,6 @@ var mongoose = require('./db.js'),
 	schema = require('../schema/photo.js'),
 	uuid = require('node-uuid'),
 	exif = require('exif').ExifImage,
-	sharp = require('sharp'),
 	fs = require('fs');
 
 var model = mongoose.model('Photo', schema);
@@ -25,7 +24,7 @@ model.newObject = function(req, res, next) {
 			latitude: json.latitude,
 			longitude: json.longitude,
 			path: './' + photo.path,
-			url: `${config.SERVER_PROTOCOL}://${config.SERVER_HOST}/api/v1/plan/${req.session.user.name}/${req.session.planId}/photo/${photoId}`
+			url: `${config.SERVER_PROTOCOL}://${config.SERVER_HOST}/${photo.filename}`
 		})
 		.save(function(err, createdPhoto) {
 			if (err) {
@@ -35,24 +34,6 @@ model.newObject = function(req, res, next) {
 			}
 			req.session.photo = createdPhoto;
 			next();
-		});
-};
-
-model.getConvertedImage = function(req, res, next) {
-	var photo = req.session.photo,
-		image = sharp(photo.path);
-
-	console.log("webp");
-
-	image
-		.webp()
-		.toBuffer()
-		.then(function(data) {
-			res.set({
-				'Content-Type': 'image/webp'
-			});
-			res.write(data)
-			res.end();
 		});
 };
 
