@@ -8,7 +8,7 @@ middleware.find = function(req, res, next) {
     if (err) {
       return res.ng(400, {error: err});
     }
-    if (!photos || photos.length == 0) {
+    if (!photos) {
       return res.ng(404, {error: 'NOT_FOUND'});
     }
     req.session.photos = photos;

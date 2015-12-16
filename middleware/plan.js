@@ -12,7 +12,7 @@ middleware.find = function(req, res, next) {
     if (err) {
       return res.ng(400, {error: err});
     }
-    if (!plans || plans.length == 0) {
+    if (!plans) {
       return res.ng(404, {error: 'NOT_FOUND'});
     }
     req.session.plans = plans;
