@@ -2,6 +2,7 @@ var mongoose = require('./db.js'),
   constant = require('../config/constant.js'),
   schema = require('../schema/photo.js'),
   uuid = require('node-uuid'),
+  exif = require('exif').ExifImage,
   fs = require('fs');
 
 var model = mongoose.model('Photo', schema);
@@ -9,6 +10,8 @@ var model = mongoose.model('Photo', schema);
 model.newObject = function(req, res, next) {
   var filePath = './' + req.files.detail[0].path,
     json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  model.extractExif('./' +  req.files.photo[0].path);
   new model({
     uuid: uuid.v4(),
     planId: req.session.planId,
@@ -27,6 +30,21 @@ model.newObject = function(req, res, next) {
     req.session.photo = createdPhoto;
     next();
   });
+};
+
+model.extractExif = function(imagePath) {
+  try {
+    new exif({ image : imagePath }, function (error, exifData) {
+      if (error) {
+        console.log('Error: '+error.message);
+        return;
+      }
+      // TODO: Add GPS data to photo model
+      console.log(exifData);
+    });
+  } catch (error) {
+    console.log('Error: ' + error.message);
+  }
 };
 
 model.toObject = function(photo, callback) {
