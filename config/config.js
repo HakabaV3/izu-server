@@ -1,7 +1,6 @@
 const config = {
 	ENV: process.env.ENV || 'development-local',
 	SERVER_PROTOCOL: 'http',
-	SERVER_HOST: process.env.ENV == 'development-local' ? 'localhost:3000' : 'izu.hakaba.xyz'
 };
 
 switch (config.ENV) {
@@ -11,7 +10,8 @@ switch (config.ENV) {
 			DB_HOST: 'localhost',
 			DB_PORT: 27017,
 			DB_NAME: 'izu-server-dev',
-			EXPRESS_PORT: 3000
+			EXPRESS_PORT: 3000,
+			SERVER_HOST: 'localhost:3000'
 		});
 		break;
 
@@ -20,7 +20,8 @@ switch (config.ENV) {
 			DB_HOST: 'localhost',
 			DB_PORT: 27018,
 			DB_NAME: 'izu-server-staging',
-			EXPRESS_PORT: 3001
+			EXPRESS_PORT: 3001,
+			SERVER_HOST: 'izu-staging.hakaba.xyz'
 		});
 		break;
 

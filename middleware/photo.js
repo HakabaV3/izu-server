@@ -20,8 +20,6 @@ middleware.find = function(req, res, next) {
 	});
 };
 
-<<<<<<< Updated upstream
-=======
 middleware.findOne = function(req, res, next) {
 	Photo.model.findOne(req.session.query, {}, function(err, photo) {
 		if (err) {
@@ -39,7 +37,6 @@ middleware.findOne = function(req, res, next) {
 	});
 };
 
->>>>>>> Stashed changes
 middleware.render = function(req, res, next) {
 	Photo.model.toObject(req.session.photo, function(err, photo) {
 		if (err) {

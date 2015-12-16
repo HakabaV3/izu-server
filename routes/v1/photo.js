@@ -46,8 +46,6 @@ router.get('/',
 );
 
 /*
-<<<<<<< Updated upstream
-=======
  * GET /api/v1/plan/:userName/:planId/photo/:photoId
  */
 router.get('/:photoId',
@@ -63,7 +61,6 @@ router.get('/:photoId',
 );
 
 /*
->>>>>>> Stashed changes
  * POST /api/v1/plan/:userName/:planId/photo (private)
  */
 router.post('/',

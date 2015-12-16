@@ -1,48 +1,14 @@
 var mongoose = require('./db.js'),
-<<<<<<< Updated upstream
-  constant = require('../config/constant.js'),
-  schema = require('../schema/photo.js'),
-  uuid = require('node-uuid'),
-  exif = require('exif').ExifImage,
-  fs = require('fs');
-=======
 	config = require('../config/config.js'),
 	schema = require('../schema/photo.js'),
 	uuid = require('node-uuid'),
 	exif = require('exif').ExifImage,
 	sharp = require('sharp'),
 	fs = require('fs');
->>>>>>> Stashed changes
 
 var model = mongoose.model('Photo', schema);
 
 model.newObject = function(req, res, next) {
-<<<<<<< Updated upstream
-  var filePath = './' + req.files.detail[0].path,
-    json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-  model.extractExif('./' +  req.files.photo[0].path);
-  new model({
-    uuid: uuid.v4(),
-    planId: req.session.planId,
-    userId: req.session.user.uuid,
-    owner: req.session.user.name,
-    description: json.description,
-    date: json.date,
-    latitude: json.latitude,
-    longitude: json.longitude,
-    url: constant.serverUrlWithPath(req.files.photo[0].filename)
-  })
-  .save(function(err, createdPhoto) {
-    if (err) {
-      return res.ng(400, {error: err});
-    }
-    req.session.photo = createdPhoto;
-    next();
-  });
-};
-
-=======
 	var photo = req.files.photo[0],
 		photoId = uuid.v4(),
 		json = JSON.parse(fs.readFileSync('./' + req.files.detail[0].path, 'utf8'));
@@ -90,7 +56,6 @@ model.getConvertedImage = function(req, res, next) {
 		});
 };
 
->>>>>>> Stashed changes
 model.extractExif = function(imagePath) {
 	try {
 		new exif({
