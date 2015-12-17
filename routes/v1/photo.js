@@ -46,6 +46,21 @@ router.get('/',
 );
 
 /*
+ * GET /api/v1/plan/:userName/:planId/photo/:photoId
+ */
+router.get('/:photoId',
+  function(req, res, next) {
+    req.session.query = {
+      uuid: req.params.photoId,
+      deleted: false
+    };
+    next();
+  },
+  Photo.middleware.findOne,
+  Photo.model.getConvertedImage
+);
+
+/*
  * POST /api/v1/plan/:userName/:planId/photo (private)
  */
 router.post('/',

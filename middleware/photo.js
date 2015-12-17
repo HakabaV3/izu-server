@@ -37,6 +37,23 @@ middleware.findOne = function(req, res, next) {
 	});
 };
 
+middleware.findOne = function(req, res, next) {
+	Photo.model.findOne(req.session.query, {}, function(err, photo) {
+		if (err) {
+			return res.ng(400, {
+				error: err
+			});
+		}
+		if (!photo) {
+			return res.ng(404, {
+				error: 'NOT_FOUND'
+			});
+		}
+		req.session.photo = photo;
+		next();
+	});
+};
+
 middleware.render = function(req, res, next) {
 	Photo.model.toObject(req.session.photo, function(err, photo) {
 		if (err) {
