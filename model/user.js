@@ -1,7 +1,8 @@
 var mongoose = require('./db.js'),
 	schema = require('../schema/user.js'),
 	crypto = require('crypto'),
-	Auth = require('./auth.js');
+	Auth = require('./auth.js'),
+	Error = require('./error.js');
 
 var _ = {},
 	model = mongoose.model('User', schema);
@@ -12,18 +13,9 @@ _.pGetOne = function(query, object) {
 
 	return new Promise(function(resolve, reject) {
 		model.findOne(query, {}, function(err, user) {
-			if (err) {
-				return reject({
-					code: 400,
-					error: err
-				});
-			}
-			if (!user) {
-				return reject({
-					code: 404,
-					error: 'NOT_FOUND'
-				});
-			}
+			if (err) return reject(Error.mongoose(500, err));
+			if (!user) return reject(Error.invalidParameter);
+
 			if (object && object.token) {
 				user.token = object.token;
 			}
@@ -40,10 +32,8 @@ _.pGetAll = function(query) {
 
 	return new Promise(function(resolve, reject) {
 		model.find(query, function(err, users) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+
 			resolve(users);
 		});
 	});
@@ -53,10 +43,7 @@ _.pCreate = function(query) {
 	return new Promise(function(resolve, reject) {
 		new model(query)
 			.save(function(err, createdUser) {
-				if (err) return reject({
-					code: 400,
-					error: err
-				});
+				if (err) return reject(Error.mongoose(500, err));
 
 				resolve(createdUser);
 			});
@@ -74,15 +61,9 @@ _.pUpdate = function(query, updateValue, object) {
 		}, {
 			new: true
 		}, function(err, updatedUser) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+			if (!updatedUser) return reject(Error.invalidParameter);
 
-			if (!updatedUser) return reject({
-				code: 404,
-				error: 'NOT_FOUND'
-			});
 			resolve(updatedUser);
 		});
 	});
@@ -100,10 +81,8 @@ _.pSoftRemove = function(query, auth) {
 		}, {
 			new: true
 		}, function(err) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+
 			resolve(auth.userId);
 		});
 	});
@@ -118,18 +97,9 @@ _.pSignIn = function(name, password) {
 	};
 	return new Promise(function(resolve, reject) {
 		model.findOne(query, {}, function(err, user) {
-			if (err) {
-				return reject({
-					code: 400,
-					error: err
-				});
-			}
-			if (!user) {
-				return reject({
-					code: 404,
-					error: 'NOT_FOUND'
-				});
-			}
+			if (err) return reject(Error.mongoose(500, err));
+			if (!user) return reject(Error.unauthorized);
+
 			return resolve(user);
 		})
 	})

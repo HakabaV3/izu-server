@@ -1,7 +1,7 @@
 var express = require('express'),
 	Auth = require('../../model/auth.js'),
 	User = require('../../model/user.js'),
-	Error = require('./error.js'),
+	Error = require('../../model/error.js'),
 	router = express.Router();
 
 /*

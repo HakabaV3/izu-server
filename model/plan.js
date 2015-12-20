@@ -1,5 +1,6 @@
 var mongoose = require('./db.js'),
-	schema = require('../schema/plan.js');
+	schema = require('../schema/plan.js'),
+	Error = require('./error.js');
 
 var _ = {},
 	model = mongoose.model('Plan', schema);
@@ -17,10 +18,8 @@ _.pGet = function(query, option) {
 
 	return new Promise(function(resolve, reject) {
 		model.find(query, {}, option, function(err, plans) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+
 			resolve(plans);
 		});
 	});
@@ -41,10 +40,8 @@ _.pCreate = function(query, user) {
 	return new Promise(function(resolve, reject) {
 		new model(query)
 			.save(function(err, createdPlan) {
-				if (err) return reject({
-					code: 400,
-					error: err
-				});
+				if (err) return reject(Error.mongoose(500, err));
+
 				resolve(createdPlan);
 			});
 	});
@@ -61,14 +58,9 @@ _.pUpdate = function(query, updateValue) {
 		}, {
 			new: true
 		}, function(err, updatedPlan) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
-			if (!updatedPlan) return reject({
-				code: 404,
-				error: 'NOT_FOUND'
-			});
+			if (err) return reject(Error.mongoose(500, err));
+			if (!updatedPlan) return reject(Error.invalidParameter);
+
 			resolve(updatedPlan);
 		});
 	});
@@ -82,10 +74,8 @@ _.pRemove = function(query, user) {
 
 	return new Promise(function(resolve, reject) {
 		model.remove(query, function(err) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+
 			resolve();
 		});
 	});
@@ -102,10 +92,8 @@ _.pSoftRemove = function(userId) {
 		}, {
 			multi: true
 		}, function(err) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+
 			resolve(userId);
 		});
 	});

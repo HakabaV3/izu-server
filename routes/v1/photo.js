@@ -2,7 +2,7 @@ var express = require('express'),
 	Auth = require('../../model/auth.js'),
 	User = require('../../model/user.js'),
 	Photo = require('../../model/photo.js'),
-	Error = require('./error.js'),
+	Error = require('../../model/error.js'),
 	fs = require('fs'),
 	multer = require('multer'),
 	storage = multer.diskStorage({
@@ -23,6 +23,7 @@ var express = require('express'),
  * GET /api/v1/plan/:userName/:planId/photo
  */
 router.get('/', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var photoQuery = {
 			planId: req.session.planId,
 			deleted: false
@@ -41,6 +42,7 @@ router.get('/', function(req, res) {
  * GET /api/v1/plan/:userName/:planId/photo/:photoId
  */
 router.get('/:photoId', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var photoQuery = {
 		uuid: req.params.photoId,
 		deleted: false
@@ -61,6 +63,7 @@ router.post('/', uploader.fields([{
 		maxCount: 4
 	}]),
 	function(req, res) {
+		console.log(`[${req.method}] ${req.url}`);
 		var authQuery = {
 				token: req.headers['x-session-token']
 			},
@@ -95,6 +98,7 @@ router.post('/', uploader.fields([{
  * PATCH /api/v1/plan/:userName/:planId/photo/:photoId (private)
  */
 router.patch('/:photoId', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var authQuery = {
 			token: req.headers['x-session-token']
 		},
@@ -125,6 +129,7 @@ router.patch('/:photoId', function(req, res) {
  * DELETE /api/v1/plan/:userName/:planId/photo/:photoId (private)
  */
 router.delete('/:photoId', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var authQuery = {
 			token: req.headers['x-session-token']
 		},

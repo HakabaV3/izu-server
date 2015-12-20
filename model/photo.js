@@ -3,7 +3,8 @@ var mongoose = require('./db.js'),
 	schema = require('../schema/photo.js'),
 	fs = require('fs'),
 	exif = require('exif').ExifImage,
-	sharp = require('sharp');
+	sharp = require('sharp'),
+	Error = require('./error.js');
 
 var _ = {},
 	model = mongoose.model('Photo', schema);
@@ -11,10 +12,8 @@ var _ = {},
 _.pGet = function(query, option) {
 	return new Promise(function(resolve, reject) {
 		model.find(query, {}, option, function(err, photos) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+
 			resolve(photos);
 		});
 	});
@@ -23,10 +22,9 @@ _.pGet = function(query, option) {
 _.pGetOne = function(query) {
 	return new Promise(function(resolve, reject) {
 		model.findOne(query, function(err, photo) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+			if (!photo) return reject(Error.invalidParameter);
+
 			resolve(photo);
 		});
 	});
@@ -41,10 +39,9 @@ _.pCreate = function(query, user) {
 	return new Promise(function(resolve, reject) {
 		new model(query)
 			.save(function(err, createdPhoto) {
-				if (err) return reject({
-					code: 400,
-					error: err
-				});
+				if (err) return reject(Error.mongoose(500, err));
+				if (!createdPhoto) return reject(Error.invalidParameter);
+
 				resolve(createdPhoto);
 			});
 	});
@@ -57,10 +54,9 @@ _.pUpdate = function(query, updateValue) {
 		}, {
 			new: true
 		}, function(err, updatedPhoto) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+			if (!updatedPhoto) return reject(Error.invalidParameter);
+
 			resolve(updatedPhoto);
 		});
 	});
@@ -71,14 +67,9 @@ _.pRemove = function(query, user) {
 	query.userId = user.uuid;
 	return new Promise(function(resolve, reject) {
 		model.findOneAndRemove(query, {}, function(err, removedPhoto) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
-			if (!removedPhoto) return reject({
-				code: 404,
-				error: 'NOT_FOUND'
-			});
+			if (err) return reject(Error.mongoose(500, err));
+			if (!removedPhoto) return reject(Error.invalidParameter);
+
 			fs.unlink(removedPhoto.path, function(err) {
 				return resolve();
 			});
@@ -97,10 +88,8 @@ _.pSoftRemove = function(userId) {
 		}, {
 			multi: true
 		}, function(err) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
+
 			resolve(userId);
 		});
 	});

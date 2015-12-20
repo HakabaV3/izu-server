@@ -3,7 +3,7 @@ var express = require('express'),
 	Auth = require('../../model/auth.js'),
 	Plan = require('../../model/plan.js'),
 	Photo = require('../../model/photo.js'),
-	Error = require('./error.js'),
+	Error = require('../../model/error.js'),
 	uuid = require('node-uuid'),
 	router = express.Router();
 
@@ -31,14 +31,13 @@ router.get('/:name', function(req, res) {
 
 /*
  * POST /api/v1/user
+ * @body
  * name     String
  * password String
  */
 router.post('/', function(req, res, next) {
 	if (!req.body.password || !req.body.name) {
-		return res.ng(400, {
-			error: "INVALID_PARAMETER"
-		});
+		return Error.pipeErrorRender(req, res, Error.invalidParameter);
 	}
 	var query = {
 		uuid: uuid.v4(),
@@ -53,6 +52,9 @@ router.post('/', function(req, res, next) {
 
 /*
  * PATCH /api/v1/user/:name (private)
+ * @headers
+ * token String
+ * @body
  * name String
  * password String
  */
@@ -79,6 +81,8 @@ router.patch('/:name', function(req, res) {
 
 /*
  * DELETE /api/v1/user/:name (private)
+ * @headers
+ * token String
  */
 router.delete('/:name', function(req, res) {
 	var authQuery = {

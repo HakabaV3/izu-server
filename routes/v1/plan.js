@@ -2,14 +2,15 @@ var express = require('express'),
 	Auth = require('../../model/auth.js'),
 	User = require('../../model/user.js'),
 	Plan = require('../../model/plan.js'),
-	Error = require('./error.js'),
+	Error = require('../../model/error.js'),
 	uuid = require('node-uuid'),
 	router = express.Router();
 
 /*
  * GET /api/v1/plan
  */
-router.get('/', function(req, res, next) {
+router.get('/', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var query = {
 			deleted: false
 		},
@@ -27,6 +28,7 @@ router.get('/', function(req, res, next) {
  * GET /api/v1/plan/:userName
  */
 router.get('/:name', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var query = {
 			owner: req.params.name,
 			deleted: false
@@ -47,6 +49,7 @@ router.get('/:name', function(req, res) {
  * title String
  */
 router.post('/', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var authQuery = {
 			token: req.headers['x-session-token']
 		},
@@ -72,6 +75,7 @@ router.post('/', function(req, res) {
  * title Sring
  */
 router.patch('/:name/:planId', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var authQuery = {
 			token: req.headers['x-session-token']
 		},
@@ -101,6 +105,7 @@ router.patch('/:name/:planId', function(req, res) {
  * DELETE /api/v1/plan/:userName/:planId (private)
  */
 router.delete('/:name/:planId', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
 	var authQuery = {
 			token: req.headers['x-session-token']
 		},

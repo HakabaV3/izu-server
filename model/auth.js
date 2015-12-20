@@ -1,6 +1,7 @@
 var mongoose = require('./db.js'),
 	crypto = require('crypto'),
-	schema = require('../schema/auth.js');
+	schema = require('../schema/auth.js'),
+	Error = require('./error.js');
 
 var _ = {},
 	model = mongoose.model('Auth', schema);
@@ -8,14 +9,9 @@ var _ = {},
 _.pGetOne = function(query, option) {
 	return new Promise(function(resolve, reject) {
 		model.findOne(query, option, function(err, auth) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
-			if (!auth) return reject({
-				code: 404,
-				error: 'NOT_FOUND'
-			});
+			if (err) return reject(Error.mongoose(500, err));
+			if (!auth) return reject(Error.unauthorized);
+
 			return resolve(auth);
 		})
 	});
@@ -34,30 +30,22 @@ _.pUpdate = function(query, needNew, user) {
 		}, {
 			new: true
 		}, function(err, updatedAuth) {
-			if (err) return reject({
-				code: 400,
-				error: err
-			});
+			if (err) return reject(Error.mongoose(500, err));
 
 			if (updatedAuth) {
 				if (!user) return resolve(updatedAuth);
 				user.token = updatedAuth.token;
 				return resolve(user);
 			}
-			if (!needNew) return reject({
-				code: 404,
-				error: 'NOT_FOUND'
-			});
+			if (!needNew) return reject(Error.unauthorized);
 
 			new model({
 					token: _.createToken(),
 					userId: query.userId
 				})
 				.save(function(err, createdAuth) {
-					if (err) return reject({
-						code: 400,
-						error: err
-					});
+					if (err) return reject(Error.mongoose(500, err));
+					if (!createdAuth) return reject(Error.invalidParameter);
 
 					if (!user) return resolve(createdAuth);
 					user.token = createdAuth.token;
@@ -74,10 +62,7 @@ _.pRemove = function(userId) {
 
 	return new Promise(function(resolve, reject) {
 		model.remove(query, function(err) {
-			if (err) reject({
-				code: 400,
-				error: err
-			});
+			if (err) reject(Error.mongoose(500, err));
 			resolve();
 		});
 	});
