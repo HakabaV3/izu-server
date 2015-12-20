@@ -1,6 +1,7 @@
 var express = require('express'),
 	Auth = require('../../model/auth.js'),
 	User = require('../../model/user.js'),
+	Error = require('./error.js'),
 	router = express.Router();
 
 /*
@@ -18,11 +19,7 @@ router.get('/me', function(req, res) {
 	Auth.pUpdate(authQuery, false)
 		.then(User.pGetOne.bind(this, userQuery))
 		.then(User.pipeSuccessRender.bind(this, req, res))
-		.catch(function(err) {
-			return res.ng(err.code, {
-				error: err.error
-			});
-		});
+		.catch(error => Error.pipeErrorRender(req, res, error));
 });
 
 /*
@@ -33,13 +30,9 @@ router.get('/me', function(req, res) {
 router.post('/', function(req, res) {
 	console.log(`[${req.method}] ${req.baseUrl}`);
 	User.pSignIn(req.body.name, User.toHashedPassword(req.body.password))
-		.then(Auth.pUpdate.bind(this, null, true))
-		.then(User.pipeSuccessRender.bind(this, req, res))
-		.catch(function(err) {
-			return res.ng(err.code, {
-				error: err.error
-			});
-		});
+		.then(user => Auth.pUpdate(null, true, user))
+		.then(user => User.pipeSuccessRender(req, res, user))
+		.catch(error => Error.pipeErrorRender(req, res, error));
 });
 
 /*
@@ -53,14 +46,8 @@ router.delete('/', function(req, res, next) {
 	};
 	Auth.pGetOne(query)
 		.then(auth => Auth.pRemove(auth.userId))
-		.then(function() {
-			return res.ok(201, {});
-		})
-		.catch(function(err) {
-			return res.ng(err.code, {
-				error: err.error
-			});
-		});
+		.then(() => res.ok(201, {}))
+		.catch(error => Error.pipeErrorRender(req, res, error));
 });
 
 module.exports = router;

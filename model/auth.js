@@ -22,13 +22,14 @@ _.pGetOne = function(query, option) {
 };
 
 _.pUpdate = function(query, needNew, user) {
+	console.log('Auth.pUpdate');
 	query = query || {};
 	if (user) query.userId = user.uuid;
 
 	return new Promise(function(resolve, reject) {
 		model.findOneAndUpdate(query, {
 			$set: {
-				token: model.createToken()
+				token: _.createToken()
 			}
 		}, {
 			new: true
@@ -38,14 +39,18 @@ _.pUpdate = function(query, needNew, user) {
 				error: err
 			});
 
-			if (updatedAuth) return resolve(updatedAuth);
+			if (updatedAuth) {
+				if (!user) return resolve(updatedAuth);
+				user.token = updatedAuth.token;
+				return resolve(user);
+			}
 			if (!needNew) return reject({
 				code: 404,
 				error: 'NOT_FOUND'
 			});
 
 			new model({
-					token: model.createToken(),
+					token: _.createToken(),
 					userId: query.userId
 				})
 				.save(function(err, createdAuth) {
@@ -54,11 +59,9 @@ _.pUpdate = function(query, needNew, user) {
 						error: err
 					});
 
-					if (user) {
-						user.token = createdAuth.token;
-						return resolve(user);
-					}
-					return resolve(createdAuth);
+					if (!user) return resolve(createdAuth);
+					user.token = createdAuth.token;
+					return resolve(user);
 				});
 		});
 	})

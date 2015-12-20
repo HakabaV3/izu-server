@@ -59,19 +59,6 @@ _.pCreate = function(query) {
 				});
 
 				resolve(createdUser);
-				new Auth({
-						token: Auth.model.createToken(),
-						userId: createdUser.uuid
-					})
-					.save(function(err, createdAuth) {
-						if (err) {
-							return res.ng(400, {
-								error: err
-							});
-						}
-						req.session.auth = createdAuth;
-						next();
-					});
 			});
 	})
 
@@ -123,6 +110,7 @@ _.pSoftRemove = function(query, auth) {
 };
 
 _.pSignIn = function(name, password) {
+	console.log('User.pSignIn');
 	var query = {
 		name: name,
 		password: password,
@@ -153,6 +141,7 @@ _.toHashedPassword = function(password) {
 }
 
 _.pipeSuccessRender = function(req, res, user) {
+	console.log('User.pipeSuccessRender');
 	var userObj = {
 		id: user.uuid,
 		name: user.name,
