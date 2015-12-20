@@ -35,6 +35,7 @@ router.use('/user', userRouter);
 router.use('/plan', planRouter);
 router.use('/plan/:userName/:planId/photo', [
 	function(req, res, next) {
+		req.session.name = req.params.userName;
 		req.session.planId = req.params.planId;
 		next();
 	},

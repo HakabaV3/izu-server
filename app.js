@@ -12,13 +12,18 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-if (!fs.existsSync(__dirname + '/log')) {
-	fs.mkdirSync(__dirname + '/log');
+function _mkdirSync(path) {
+	if (!fs.existsSync(path)) {
+		fs.mkdirSync(path);
+	}
 }
+_mkdirSync(__dirname + '/log');
+_mkdirSync(__dirname + '/uploads');
+
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
-app.use(logger('combine', {
+app.use(logger('combined', {
 	stream: fs.createWriteStream(__dirname + '/log/access_log.txt', {
 		flags: 'a'
 	})

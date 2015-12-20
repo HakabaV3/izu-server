@@ -1,16 +1,9 @@
 var express = require('express'),
-	Auth = {
-		model: require('../../model/auth.js'),
-		middleware: require('../../middleware/auth.js')
-	},
-	User = {
-		model: require('../../model/user.js'),
-		middleware: require('../../middleware/user.js')
-	},
-	Photo = {
-		model: require('../../model/photo.js'),
-		middleware: require('../../middleware/photo.js')
-	},
+	Auth = require('../../model/auth.js'),
+	User = require('../../model/user.js'),
+	Photo = require('../../model/photo.js'),
+	Error = require('./error.js'),
+	fs = require('fs'),
 	multer = require('multer'),
 	storage = multer.diskStorage({
 		destination: function(req, file, cb) {
@@ -23,127 +16,132 @@ var express = require('express'),
 	uploader = multer({
 		storage: storage
 	}),
+	uuid = require('node-uuid'),
 	router = express.Router();
 
 /*
  * GET /api/v1/plan/:userName/:planId/photo
  */
-router.get('/',
-	function(req, res, next) {
-		req.session.query = {
+router.get('/', function(req, res) {
+	var photoQuery = {
 			planId: req.session.planId,
 			deleted: false
-		};
-		req.session.option = {
+		},
+		option = {
 			sort: {
 				created: 'desc'
 			}
 		};
-		next();
-	},
-	Photo.middleware.find,
-	Photo.middleware.renderAll
-);
+	Photo.pGet(photoQuery, option)
+		.then(photos => Photo.pipeSuccessRenderAll(req, res, photos))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * GET /api/v1/plan/:userName/:planId/photo/:photoId
  */
-router.get('/:photoId',
-  function(req, res, next) {
-    req.session.query = {
-      uuid: req.params.photoId,
-      deleted: false
-    };
-    next();
-  },
-  Photo.middleware.findOne,
-  Photo.model.getConvertedImage
-);
+router.get('/:photoId', function(req, res) {
+	var photoQuery = {
+		uuid: req.params.photoId,
+		deleted: false
+	};
+	Photo.pGetOne(photoQuery)
+		.then(photo => Photo.pGetConvertedImage(req, res, photo))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * POST /api/v1/plan/:userName/:planId/photo (private)
  */
-router.post('/',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	uploader.fields([{
+router.post('/', uploader.fields([{
 		name: 'photo',
 		maxCount: 1
 	}, {
 		name: 'detail',
 		maxCount: 4
 	}]),
-	Photo.model.newObject,
-	Photo.middleware.render
-);
+	function(req, res) {
+		var authQuery = {
+				token: req.headers['x-session-token']
+			},
+			userQuery = {
+				name: req.session.name,
+				deleted: false
+			},
+			photo = req.files.photo[0],
+			json = JSON.parse(fs.readFileSync(req.files.detail[0].path, 'utf8')),
+			photoQuery = {
+				uuid: uuid.v4(),
+				planId: req.session.planId,
+				description: json.description,
+				date: json.date,
+				latitude: json.latitude,
+				longitude: json.longitude,
+				path: photo.path,
+			};
+
+		fs.unlink(req.files.detail[0].path, function(err) {
+			if (err) console.error(err);
+		});
+
+		Auth.pGetOne(authQuery)
+			.then(auth => User.pGetOne(userQuery, auth))
+			.then(user => Photo.pCreate(photoQuery, user))
+			.then(photo => Photo.pipeSuccessRender(req, res, photo))
+			.catch(error => Error.pipeErrorRender(req, res, error));
+	});
 
 /*
  * PATCH /api/v1/plan/:userName/:planId/photo/:photoId (private)
  */
-router.patch('/:photoId',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	function(req, res, next) {
-		var latitude = req.body.latitude,
-			longitude = req.body.longitude,
-			description = req.body.description,
-			updateValue = {
-				updated: parseInt(Date.now() / 1000)
-			};
+router.patch('/:photoId', function(req, res) {
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
+			name: req.session.name,
+			deleted: false
+		},
+		photoQuery = {
+			uuid: req.params.photoId,
+			deleted: false
+		},
+		updateValue = {
+			updated: parseInt(Date.now() / 1000)
+		};
 
-		if (latitude) {
-			updateValue.latitude = latitude
-		}
-		if (longitude) {
-			updateValue.longitude = longitude
-		}
-		if (description) {
-			updateValue.description = description
-		}
+	if (req.body.latitude) updateValue.latitude = req.body.latitude;
+	if (req.body.longitude) updateValue.longitude = req.body.longitude;
+	if (req.body.description) updateValue.description = req.body.description;
 
-		Photo.model.findOneAndUpdate({
-			uuid: req.params.photoId
-		}, {
-			$set: updateValue
-		}, {
-			new: true
-		}, function(err, updatedPhoto) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			if (!updatedPhoto) {
-				return res.ng(404, {
-					error: 'NOT_FOUND'
-				});
-			}
-
-			req.session.photo = updatedPhoto;
-			next();
-		});
-	},
-	Photo.middleware.render
-);
+	Auth.pGetOne(authQuery)
+		.then(auth => User.pGetOne(userQuery, auth))
+		.then(user => Photo.pUpdate(photoQuery, updateValue))
+		.then(photo => Photo.pipeSuccessRender(req, res, photo))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * DELETE /api/v1/plan/:userName/:planId/photo/:photoId (private)
  */
-router.delete('/:photoId',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	function(req, res, next) {
-		Photo.model.remove({
-			uuid: req.params.photoId
-		}, function(err) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			return res.ok(201, {});
-		});
-	}
-);
+router.delete('/:photoId', function(req, res) {
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
+			name: req.session.name,
+			deleted: false,
+		},
+		photoQuery = {
+			uuid: req.params.photoId,
+			deleted: false
+		};
+
+	Auth.pGetOne(authQuery)
+		.then(auth => User.pGetOne(userQuery, auth))
+		.then(user => Photo.pRemove(photoQuery, user))
+		.then(() => res.ok(201, {}))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 module.exports = router;

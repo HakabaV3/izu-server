@@ -16,7 +16,7 @@ var config = require('../config/config.js');
 var port = normalizePort(config.EXPRESS_PORT);
 app.set('port', port);
 
-console.log(config.EXPRESS_PORT);
+console.log(`Server start on PORT=${config.EXPRESS_PORT}\n`);
 
 /**
  * Create HTTP server.

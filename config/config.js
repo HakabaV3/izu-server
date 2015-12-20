@@ -5,6 +5,14 @@ const config = {
 
 switch (config.ENV) {
 	case 'development-sakura':
+		Object.assign(config, {
+			DB_HOST: 'localhost',
+			DB_PORT: 27017,
+			DB_NAME: 'izu-server-dev',
+			EXPRESS_PORT: 3000,
+			SERVER_HOST: 'izu.hakaba.xyz'
+		});
+		break;
 	case 'development-local':
 		Object.assign(config, {
 			DB_HOST: 'localhost',

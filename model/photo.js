@@ -1,46 +1,151 @@
 var mongoose = require('./db.js'),
 	config = require('../config/config.js'),
 	schema = require('../schema/photo.js'),
-	uuid = require('node-uuid'),
+	fs = require('fs'),
 	exif = require('exif').ExifImage,
-	sharp = require('sharp'),
-	fs = require('fs');
+	sharp = require('sharp');
 
-var model = mongoose.model('Photo', schema);
+var _ = {},
+	model = mongoose.model('Photo', schema);
 
-model.newObject = function(req, res, next) {
-	var photo = req.files.photo[0],
-		photoId = uuid.v4(),
-		json = JSON.parse(fs.readFileSync('./' + req.files.detail[0].path, 'utf8'));
-
-	model.extractExif('./' + photo.path);
-
-	new model({
-			uuid: photoId,
-			planId: req.session.planId,
-			userId: req.session.user.uuid,
-			owner: req.session.user.name,
-			description: json.description,
-			date: json.date,
-			latitude: json.latitude,
-			longitude: json.longitude,
-			path: './' + photo.path,
-			url: `${config.SERVER_PROTOCOL}://${config.SERVER_HOST}/api/v1/plan/${req.session.user.name}/${req.session.planId}/photo/${photoId}`
-		})
-		.save(function(err, createdPhoto) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			req.session.photo = createdPhoto;
-			next();
+_.pGet = function(query, option) {
+	return new Promise(function(resolve, reject) {
+		model.find(query, {}, option, function(err, photos) {
+			if (err) return reject({
+				code: 400,
+				error: err
+			});
+			resolve(photos);
 		});
+	});
 };
 
-model.getConvertedImage = function(req, res, next) {
-	var photo = req.session.photo,
-		image = sharp(photo.path);
+_.pGetOne = function(query) {
+	return new Promise(function(resolve, reject) {
+		model.findOne(query, function(err, photo) {
+			if (err) return reject({
+				code: 400,
+				error: err
+			});
+			resolve(photo);
+		});
+	});
+};
+
+_.pCreate = function(query, user) {
+	Object.assign(query, {
+		userId: user.uuid,
+		owner: user.name,
+		url: `${config.SERVER_PROTOCOL}://${config.SERVER_HOST}/api/v1/plan/${user.name}/${query.planId}/photo/${query.uuid}`
+	});
+	return new Promise(function(resolve, reject) {
+		new model(query)
+			.save(function(err, createdPhoto) {
+				if (err) return reject({
+					code: 400,
+					error: err
+				});
+				resolve(createdPhoto);
+			});
+	});
+};
+
+_.pUpdate = function(query, updateValue) {
+	return new Promise(function(resolve, reject) {
+		model.findOneAndUpdate(query, {
+			$set: updateValue
+		}, {
+			new: true
+		}, function(err, updatedPhoto) {
+			if (err) return reject({
+				code: 400,
+				error: err
+			});
+			resolve(updatedPhoto);
+		});
+	});
+};
+
+_.pRemove = function(query, user) {
+	query = query || {};
+	query.userId = user.uuid;
+	return new Promise(function(resolve, reject) {
+		model.findOneAndRemove(query, {}, function(err, removedPhoto) {
+			if (err) return reject({
+				code: 400,
+				error: err
+			});
+			if (!removedPhoto) return reject({
+				code: 404,
+				error: 'NOT_FOUND'
+			});
+			fs.unlink(removedPhoto.path, function(err) {
+				return resolve();
+			});
+		});
+	});
+};
+
+_.pSoftRemove = function(userId) {
+	return new Promise(function(resolve, reject) {
+		model.update({
+			userId: userId
+		}, {
+			$set: {
+				deleted: true
+			}
+		}, {
+			multi: true
+		}, function(err) {
+			if (err) return reject({
+				code: 400,
+				error: err
+			});
+			resolve(userId);
+		});
+	});
+};
+
+_.pipeSuccessRender = function(req, res, photo) {
+	return res.ok(200, {
+		photo: {
+			id: photo.uuid,
+			planId: photo.planId,
+			userId: photo.userId,
+			owner: photo.owner,
+			latitude: photo.latitude,
+			longitude: photo.longitude,
+			date: photo.date,
+			description: photo.description,
+			created: photo.created,
+			updated: photo.updated,
+			url: photo.url
+		}
+	});
+};
+
+_.pipeSuccessRenderAll = function(req, res, photos) {
+	return res.ok(200, {
+		photos: photos.map(function(photo) {
+			return {
+				id: photo.uuid,
+				planId: photo.planId,
+				userId: photo.userId,
+				owner: photo.owner,
+				latitude: photo.latitude,
+				longitude: photo.longitude,
+				date: photo.date,
+				description: photo.description,
+				created: photo.created,
+				updated: photo.updated,
+				url: photo.url
+			};
+		})
+	});
+};
+
+_.pGetConvertedImage = function(req, res, photo) {
+	var image = sharp(photo.path);
 
 	console.log("webp");
 
@@ -56,7 +161,7 @@ model.getConvertedImage = function(req, res, next) {
 		});
 };
 
-model.extractExif = function(imagePath) {
+_.extractExif = function(imagePath) {
 	try {
 		new exif({
 			image: imagePath
@@ -73,38 +178,4 @@ model.extractExif = function(imagePath) {
 	}
 };
 
-model.toObject = function(photo, callback) {
-	return callback(null, {
-		id: photo.uuid,
-		planId: photo.planId,
-		userId: photo.userId,
-		owner: photo.owner,
-		latitude: photo.latitude,
-		longitude: photo.longitude,
-		date: photo.date,
-		description: photo.description,
-		created: photo.created,
-		updated: photo.updated,
-		url: photo.url
-	});
-};
-
-model.toObjectAll = function(photos, callback) {
-	return callback(null, photos.map(function(photo) {
-		return {
-			id: photo.uuid,
-			planId: photo.planId,
-			userId: photo.userId,
-			owner: photo.owner,
-			latitude: photo.latitude,
-			longitude: photo.longitude,
-			date: photo.date,
-			description: photo.description,
-			created: photo.created,
-			updated: photo.updated,
-			url: photo.url
-		};
-	}));
-};
-
-module.exports = model;
+module.exports = _;

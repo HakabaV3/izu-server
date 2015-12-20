@@ -1,44 +1,33 @@
 var express = require('express'),
-	User = {
-		model: require('../../model/user.js'),
-		middleware: require('../../middleware/user.js')
-	},
-	Auth = {
-		model: require('../../model/auth.js'),
-		middleware: require('../../middleware/auth.js')
-	},
+	User = require('../../model/user.js'),
+	Auth = require('../../model/auth.js'),
+	Plan = require('../../model/plan.js'),
+	Photo = require('../../model/photo.js'),
+	Error = require('./error.js'),
 	uuid = require('node-uuid'),
 	router = express.Router();
 
 /*
  * GET /api/v1/user
  */
-router.get('/', function(req, res, next) {
-	User.model.find({
-		deleted: false
-	}, function(err, users) {
-		if (err) {
-			return res.ng(400, {
-				error: err
-			});
-		}
-		if (!users || users.length == 0) {
-			return res.ng(404, {
-				error: 'NOT_FOUND'
-			});
-		}
-		req.session.users = users;
-		next();
-	})
-}, User.middleware.renderAll);
+router.get('/', function(req, res) {
+	User.pGetAll()
+		.then(user => User.pipeSuccessRenderAll(req, res, user))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * GET /api/v1/user/:name
  */
-router.get('/:name',
-	User.middleware.findOneByName,
-	User.middleware.render
-);
+router.get('/:name', function(req, res) {
+	var query = {
+		name: req.params.name,
+		deleted: false
+	};
+	User.pGetOne(query)
+		.then(user => User.pipeSuccessRender(req, res, user))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * POST /api/v1/user
@@ -51,116 +40,62 @@ router.post('/', function(req, res, next) {
 			error: "INVALID_PARAMETER"
 		});
 	}
-	new User.model({
-			uuid: uuid.v4(),
-			name: req.body.name,
-			password: User.model.toHashedPassword(req.body.password)
-		})
-		.save(function(err, createdUser) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-
-			req.session.user = createdUser;
-			new Auth.model({
-					token: Auth.model.createToken(),
-					userId: createdUser.uuid
-				})
-				.save(function(err, createdAuth) {
-					if (err) {
-						return res.ng(400, {
-							error: err
-						});
-					}
-					req.session.auth = createdAuth;
-					next();
-				});
-		});
-}, User.middleware.renderAuth);
+	var query = {
+		uuid: uuid.v4(),
+		name: req.body.name,
+		password: User.toHashedPassword(req.body.password)
+	};
+	User.pCreate(query)
+		.then(user => Auth.pUpdate(null, true, user))
+		.then(user => User.pipeSuccessRender(req, res, user))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * PATCH /api/v1/user/:name (private)
  * name String
  * password String
  */
-router.patch('/:name',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	function(req, res, next) {
-		var name = req.body.name,
-			password = req.body.password,
-			updateValue = {
-				updated: parseInt(Date.now() / 1000)
-			};
+router.patch('/:name', function(req, res) {
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
+			name: req.params.name,
+			deleted: false
+		},
+		updateValue = {
+			updated: parseInt(Date.now() / 1000)
+		};
 
-		if (name) {
-			updateValue.name = name
-		}
-		if (password) {
-			updateValue.password = User.model.toHashedPassword(password)
-		}
+	if (req.body.name) updateValue.name = req.body.name;
+	if (req.body.password) updateValue.password = req.body.password;
 
-		User.model.findOneAndUpdate({
-			name: req.params.name
-		}, {
-			$set: updateValue
-		}, {
-			new: true
-		}, function(err, updatedUser) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			if (!updatedUser) {
-				return res.ng(404, {
-					error: 'NOT_FOUND'
-				});
-			}
-
-			req.session.user = updatedUser;
-			next();
-		})
-	},
-	User.middleware.render
-);
+	Auth.pGetOne(authQuery)
+		.then(auth => User.pUpdate(userQuery, updateValue, auth))
+		.then(user => User.pipeSuccessRender(req, res, user))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * DELETE /api/v1/user/:name (private)
  */
-router.delete('/:name',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	function(req, res, next) {
-		User.model.findOneAndUpdate({
+router.delete('/:name', function(req, res) {
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
 			name: req.params.name
-		}, {
-			$set: {
-				updated: new Date(),
-				deleted: true
-			}
-		}, {
-			new: true
-		}, function(err) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			Auth.model.findOneAndRemove({
-				uuid: req.session.auth.uuid
-			}, function(err) {
-				if (err) {
-					return res.ng(400, {
-						error: err
-					});
-				}
-				return res.ok(201, {});
-			});
-		});
-	}
-);
+		};
+	Auth.pGetOne(authQuery)
+		.then(auth => User.pSoftRemove(userQuery, auth))
+		.then(userId => Auth.pRemove(userId))
+		.then(userId => Plan.pSoftRemove(userId))
+		.then(userId => Photo.pSoftRemove(userId))
+		.then(function() {
+			return res.ok(201, {});
+		})
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 module.exports = router;

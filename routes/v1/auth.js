@@ -1,88 +1,66 @@
 var express = require('express'),
-	Auth = {
-		model: require('../../model/auth.js'),
-		middleware: require('../../middleware/auth.js')
-	},
-	User = {
-		model: require('../../model/user.js'),
-		middleware: require('../../middleware/user.js')
-	},
+	Auth = require('../../model/auth.js'),
+	User = require('../../model/user.js'),
 	router = express.Router();
 
 /*
+ * @header
  * token String
  */
-router.get('/me',
-	Auth.middleware.findOneAndUpdateToken,
-	User.middleware.findOneByAuth,
-	User.middleware.renderAuth
-);
+router.get('/me', function(req, res) {
+	console.log(`[${req.method}] ${req.url}`);
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
+			deleted: false
+		};
+	Auth.pUpdate(authQuery, false)
+		.then(User.pGetOne.bind(this, userQuery))
+		.then(User.pipeSuccessRender.bind(this, req, res))
+		.catch(function(err) {
+			return res.ng(err.code, {
+				error: err.error
+			});
+		});
+});
 
 /*
+ * @body
  * userName String
  * password String
  */
-router.post('/', User.middleware.findOneByNameAndPassword,
-	function(req, res, next) {
-		User.model.findOne({
-			name: req.body.name,
-			password: User.model.toHashedPassword(req.body.password)
-		}, {}, function(err, user) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			Auth.model.findOneAndUpdate({
-				userId: req.session.user.uuid
-			}, {
-				$set: {
-					token: Auth.model.createToken()
-				}
-			}, {
-				new: true
-			}, function(err, auth) {
-				if (err) {
-					return res.ng(400, {
-						error: err
-					});
-				}
-				if (auth) {
-					req.session.auth = auth;
-					return next();
-				}
-				new Auth.model({
-						token: Auth.model.createToken(),
-						userId: user.uuid
-					})
-					.save(function(err, createdAuth) {
-						if (err) {
-							return res.ng(400, {
-								error: err
-							});
-						}
-						req.session.auth = createdAuth;
-						next();
-					});
+router.post('/', function(req, res) {
+	console.log(`[${req.method}] ${req.baseUrl}`);
+	User.pSignIn(req.body.name, User.toHashedPassword(req.body.password))
+		.then(Auth.pUpdate.bind(this, null, true))
+		.then(User.pipeSuccessRender.bind(this, req, res))
+		.catch(function(err) {
+			return res.ng(err.code, {
+				error: err.error
 			});
 		});
-	}, User.middleware.renderAuth);
+});
 
 /*
+ * @header
  * token String
  */
-router.delete('', Auth.middleware.findOne,
-	function(req, res, next) {
-		Auth.model.remove({
-			userId: req.session.auth.userId
-		}, function(err, deletedAuth) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
+router.delete('/', function(req, res, next) {
+	console.log(`[${req.method}] ${req.baseUrl}`);
+	var query = {
+		token: req.headers['x-session-token']
+	};
+	Auth.pGetOne(query)
+		.then(auth => Auth.pRemove(auth.userId))
+		.then(function() {
 			return res.ok(201, {});
+		})
+		.catch(function(err) {
+			return res.ng(err.code, {
+				error: err.error
+			});
 		});
-	});
+});
 
 module.exports = router;

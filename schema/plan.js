@@ -25,5 +25,6 @@ module.exports = new mongoose.Schema({
 		type: String,
 		required: true
 	},
+	description: String,
 	uuid: String
 });

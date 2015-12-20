@@ -1,146 +1,121 @@
 var express = require('express'),
-	Auth = {
-		model: require('../../model/auth.js'),
-		middleware: require('../../middleware/auth.js')
-	},
-	User = {
-		model: require('../../model/user.js'),
-		middleware: require('../../middleware/user.js')
-	},
-	Plan = {
-		model: require('../../model/plan.js'),
-		middleware: require('../../middleware/plan.js')
-	},
+	Auth = require('../../model/auth.js'),
+	User = require('../../model/user.js'),
+	Plan = require('../../model/plan.js'),
+	Error = require('./error.js'),
 	uuid = require('node-uuid'),
 	router = express.Router();
 
 /*
  * GET /api/v1/plan
  */
-router.get('/',
-	function(req, res, next) {
-		req.session.query = {
+router.get('/', function(req, res, next) {
+	var query = {
 			deleted: false
-		};
-		req.session.option = {
+		},
+		option = {
 			sort: {
 				created: 'desc'
 			}
 		};
-		next();
-	},
-	Plan.middleware.find,
-	Plan.middleware.renderAll
-);
+	Plan.pGet(query, option)
+		.then(plans => Plan.pipeSuccessRenderAll(req, res, plans))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * GET /api/v1/plan/:userName
  */
-router.get('/:name',
-	User.middleware.findOneByName,
-	function(req, res, next) {
-		req.session.query = {
-			deleted: false,
-			owner: req.params.name
-		};
-		req.session.option = {
+router.get('/:name', function(req, res) {
+	var query = {
+			owner: req.params.name,
+			deleted: false
+		},
+		option = {
 			sort: {
 				created: 'desc'
 			}
 		};
-		next();
-	},
-	Plan.middleware.find,
-	Plan.middleware.renderAll
-);
+	Plan.pGet(query, option)
+		.then(plans => Plan.pipeSuccessRenderAll(req, res, plans))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * POST /api/v1/plan (private)
+ * @body
  * title String
  */
-router.post('/',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	function(req, res, next) {
-		new Plan.model({
-				uuid: uuid.v4(),
-				title: req.body.title,
-				owner: req.session.user.name,
-				userId: req.session.user.uuid
-			})
-			.save(function(err, createdPlan) {
-				if (err) {
-					return res.ng(400, {
-						error: err
-					});
-				}
-				req.session.plan = createdPlan;
-				next();
-			});
-	},
-	Plan.middleware.render
-);
+router.post('/', function(req, res) {
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
+			deleted: false
+		},
+		planQuery = {
+			uuid: uuid.v4(),
+			title: req.body.title,
+			description: req.body.description,
+			deleted: false
+		};
+
+	Auth.pGetOne(authQuery)
+		.then(auth => User.pGetOne(userQuery, auth))
+		.then(user => Plan.pCreate(planQuery, user))
+		.then(plan => Plan.pipeSuccessRender(req, res, plan))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * PATCH /api/v1/plan/:userName/:planId (private)
  * title Sring
  */
-router.patch('/:name/:id',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	function(req, res, next) {
-		var title = req.body.title,
-			updateValue = {
-				updated: parseInt(Date.now() / 1000)
-			};
+router.patch('/:name/:planId', function(req, res) {
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
+			name: req.params.name,
+			deleted: false
+		},
+		planQuery = {
+			uuid: req.params.planId,
+			deleted: false
+		},
+		updateValue = {
+			updated: parseInt(Date.now() / 1000)
+		};
 
-		if (title) {
-			updateValue.title = title
-		}
+	if (req.body.title) updateValue.title = req.body.title;
+	if (req.body.description) updateValue.description = req.body.description;
 
-		Plan.model.findOneAndUpdate({
-			uuid: req.params.id
-		}, {
-			$set: updateValue
-		}, {
-			new: true
-		}, function(err, updatedPlan) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			if (!updatedPlan) {
-				return res.ng(404, {
-					error: 'NOT_FOUND'
-				});
-			}
-
-			req.session.plan = updatedPlan;
-			next();
-		});
-	},
-	Plan.middleware.render
-);
+	Auth.pGetOne(authQuery)
+		.then(auth => User.pGetOne(userQuery, auth))
+		.then(user => Plan.pUpdate(planQuery, updateValue))
+		.then(plan => Plan.pipeSuccessRender(req, res, plan))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 /*
  * DELETE /api/v1/plan/:userName/:planId (private)
  */
-router.delete('/:name/:id',
-	Auth.middleware.findOne,
-	User.middleware.findOneByAuth,
-	function(req, res, next) {
-		Plan.model.remove({
-			uuid: req.params.id
-		}, function(err) {
-			if (err) {
-				return res.ng(400, {
-					error: err
-				});
-			}
-			return res.ok(201, {});
-		});
-	}
-);
+router.delete('/:name/:planId', function(req, res) {
+	var authQuery = {
+			token: req.headers['x-session-token']
+		},
+		userQuery = {
+			name: req.params.name,
+			deleted: false
+		},
+		planQuery = {
+			uuid: req.params.planId
+		};
+	Auth.pGetOne(authQuery)
+		.then(auth => User.pGetOne(userQuery, auth))
+		.then(user => Plan.pRemove(planQuery, user))
+		.then(() => res.ok(201, {}))
+		.catch(error => Error.pipeErrorRender(req, res, error));
+});
 
 module.exports = router;

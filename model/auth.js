@@ -2,19 +2,86 @@ var mongoose = require('./db.js'),
 	crypto = require('crypto'),
 	schema = require('../schema/auth.js');
 
-var model = mongoose.model('Auth', schema);
+var _ = {},
+	model = mongoose.model('Auth', schema);
 
-model.toObject = function(auth, callback) {
-	return callback(null, {
-		id: auth._id.toString(),
-		token: auth.token,
-		created: auth.created,
-		updated: auth.updated
+_.pGetOne = function(query, option) {
+	return new Promise(function(resolve, reject) {
+		model.findOne(query, option, function(err, auth) {
+			if (err) return reject({
+				code: 400,
+				error: err
+			});
+			if (!auth) return reject({
+				code: 404,
+				error: 'NOT_FOUND'
+			});
+			return resolve(auth);
+		})
 	});
 };
 
-model.createToken = function() {
+_.pUpdate = function(query, needNew, user) {
+	query = query || {};
+	if (user) query.userId = user.uuid;
+
+	return new Promise(function(resolve, reject) {
+		model.findOneAndUpdate(query, {
+			$set: {
+				token: model.createToken()
+			}
+		}, {
+			new: true
+		}, function(err, updatedAuth) {
+			if (err) return reject({
+				code: 400,
+				error: err
+			});
+
+			if (updatedAuth) return resolve(updatedAuth);
+			if (!needNew) return reject({
+				code: 404,
+				error: 'NOT_FOUND'
+			});
+
+			new model({
+					token: model.createToken(),
+					userId: query.userId
+				})
+				.save(function(err, createdAuth) {
+					if (err) return reject({
+						code: 400,
+						error: err
+					});
+
+					if (user) {
+						user.token = createdAuth.token;
+						return resolve(user);
+					}
+					return resolve(createdAuth);
+				});
+		});
+	})
+};
+
+_.pRemove = function(userId) {
+	var query = {
+		userId: userId
+	};
+
+	return new Promise(function(resolve, reject) {
+		model.remove(query, function(err) {
+			if (err) reject({
+				code: 400,
+				error: err
+			});
+			resolve();
+		});
+	});
+};
+
+_.createToken = function() {
 	return crypto.createHash('sha512').update(crypto.randomBytes(256).toString()).digest('hex');
 }
 
-module.exports = model;
+module.exports = _;
