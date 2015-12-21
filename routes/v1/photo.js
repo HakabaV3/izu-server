@@ -48,11 +48,18 @@ router.get('/', function(req, res) {
 router.get('/:photoId', function(req, res) {
 	console.log(`[${req.method}] ${req.url}`);
 	var photoQuery = {
-		uuid: req.params.photoId,
-		deleted: false
-	};
+			uuid: req.params.photoId,
+			deleted: false
+		},
+		params = {
+			width: parseInt(req.query.width) || null,
+			height: parseInt(req.query.height) || 300,
+			quality: req.query.quality || '',
+			webp: req.query.webp ? !!parseInt(req.query.webp) : true
+		};
+	console.log(req.query);
 	Photo.pGetOne(photoQuery)
-		.then(photo => Photo.pGetConvertedImage(req, res, photo))
+		.then(photo => Photo.pGetConvertedImage(req, res, photo, params))
 		.catch(error => Error.pipeErrorRender(req, res, error));
 });
 

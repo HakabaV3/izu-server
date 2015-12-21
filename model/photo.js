@@ -133,21 +133,64 @@ _.pipeSuccessRenderAll = function(req, res, photos) {
 	});
 };
 
-_.pGetConvertedImage = function(req, res, photo) {
-	var image = sharp(photo.path);
+_.pGetConvertedImage = function(req, res, photo, params) {
+	console.log('Photo.pGetConvertedImage');
+	var image = sharp(photo.path),
+		width, height, q, type;
 
-	console.log("webp");
+	switch (params.quality) {
+		case 'high':
+			q = 80;
+			break;
+		case 'medium':
+			q = 50;
+			break;
+		case 'low':
+			q = 20;
+			break;
+		default:
+			q = params.webp ? 20 : 40;
+	}
 
-	image
-		.webp()
-		.toBuffer()
-		.then(function(data) {
-			res.set({
-				'Content-Type': 'image/webp'
+	width = params.width || null;
+	height = params.height || null;
+
+	if (params.webp) {
+		console.log(params);
+		image
+			.resize(width, height)
+			.embed()
+			.crop(sharp.gravity.center)
+			.withoutEnlargement()
+			.quality(q)
+			.webp()
+			.toBuffer()
+			.then(function(data) {
+				console.log('toBuffer');
+				res.set({
+					'Content-Type': 'image/webp'
+				});
+				res.write(data)
+				res.end();
 			});
-			res.write(data)
-			res.end();
-		});
+	} else {
+		console.log(params);
+		image
+			.resize(width, height)
+			.embed()
+			.crop(sharp.gravity.center)
+			.withoutEnlargement()
+			.quality(q)
+			.toBuffer()
+			.then(function(data) {
+				console.log('toBuffer');
+				res.set({
+					'Content-Type': 'image/jpg'
+				});
+				res.write(data)
+				res.end();
+			});
+	}
 };
 
 _.extractExif = function(imagePath) {
