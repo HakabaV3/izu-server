@@ -47,6 +47,11 @@ router.get('/', function(req, res) {
 
 /*
  * GET /api/v1/plan/:userName/:planId/photo/:photoId
+ * @query
+ * width | value of image width
+ * height | value of image height
+ * q | high or medium or low
+ * webp | 0 or 1
  */
 router.get('/:photoId', function(req, res) {
 	console.log(`[${req.method}] ${req.url}`);
@@ -57,7 +62,7 @@ router.get('/:photoId', function(req, res) {
 		params = {
 			width: parseInt(req.query.width) || null,
 			height: parseInt(req.query.height) || 300,
-			quality: req.query.quality || '',
+			quality: req.query.q || '',
 			webp: req.query.webp ? !!parseInt(req.query.webp) : true
 		};
 	console.log(req.query);
