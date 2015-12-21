@@ -7,7 +7,11 @@ var express = require('express'),
 	multer = require('multer'),
 	storage = multer.diskStorage({
 		destination: function(req, file, cb) {
-			cb(null, './uploads/')
+			var path = `uploads/${req.session.name}/${req.session.planId}/`;
+			if (!fs.existsSync(path)) {
+				fs.mkdirSync(path);
+			}
+			cb(null, path)
 		},
 		filename: function(req, file, cb) {
 			cb(null, Date.now() + '-' + file.originalname);
