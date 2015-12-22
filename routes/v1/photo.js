@@ -7,14 +7,10 @@ var express = require('express'),
 	multer = require('multer'),
 	storage = multer.diskStorage({
 		destination: function(req, file, cb) {
-			var path = `uploads/${req.session.name}`;
-			if (!fs.existsSync(path)) {
-				fs.mkdirSync(path);
-				path = path + `/${req.session.planId}`;
-				if (!fs.existsSync(path)) fs.mkdirSync(path);
-			}
+			_mkdirSync(`uploads/${req.session.name}`);
+			_mkdirSync(`uploads/${req.session.name}/${req.session.planId}`);
 
-			cb(null, path)
+			cb(null, `uploads/${req.session.name}/${req.session.planId}`)
 		},
 		filename: function(req, file, cb) {
 			cb(null, Date.now() + '-' + file.originalname);
@@ -25,6 +21,12 @@ var express = require('express'),
 	}),
 	uuid = require('node-uuid'),
 	router = express.Router();
+
+function _mkdirSync(path) {
+	if (!fs.existsSync(path)) {
+		fs.mkdirSync(path);
+	}
+};
 
 /*
  * GET /api/v1/plan/:userName/:planId/photo
