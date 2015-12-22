@@ -71,7 +71,7 @@ router.patch('/:name', function(req, res) {
 		};
 
 	if (req.body.name) updateValue.name = req.body.name;
-	if (req.body.password) updateValue.password = req.body.password;
+	if (req.body.password) updateValue.password = User.toHashedPassword(req.body.password);
 
 	Auth.pGetOne(authQuery)
 		.then(auth => User.pUpdate(userQuery, updateValue, auth))
