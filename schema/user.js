@@ -1,14 +1,6 @@
 var mongoose = require('../model/db.js');
 
-module.exports = new mongoose.Schema({
-	created: {
-		type: Number,
-		default: parseInt(Date.now() / 1000)
-	},
-	updated: {
-		type: Number,
-		default: parseInt(Date.now() / 1000)
-	},
+var userSchema = new mongoose.Schema({
 	deleted: {
 		type: Boolean,
 		default: false
@@ -24,5 +16,17 @@ module.exports = new mongoose.Schema({
 	password: {
 		type: String,
 		required: true
-	}
+	},
+	created: Number,
+	updated: Number
 });
+
+userSchema.pre('save', function(next) {
+	now = parseInt(Date.now() / 1000);
+	this.updated = now;
+	if (!this.created) this.created = now;
+
+	next();
+});
+
+module.exports = userSchema;

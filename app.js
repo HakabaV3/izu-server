@@ -4,7 +4,8 @@ var express = require('express'),
 	logger = require('morgan'),
 	fs = require('fs'),
 	cookieParser = require('cookie-parser'),
-	bodyParser = require('body-parser');
+	bodyParser = require('body-parser'),
+	cron = require('./utils/cron.js');
 
 var app = express();
 
@@ -19,6 +20,9 @@ function _mkdirSync(path) {
 }
 _mkdirSync(__dirname + '/log');
 _mkdirSync(__dirname + '/uploads');
+
+// about Util
+cron.setup();
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));

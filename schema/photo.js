@@ -1,14 +1,6 @@
 var mongoose = require('mongoose');
 
-module.exports = new mongoose.Schema({
-	created: {
-		type: Number,
-		default: parseInt(Date.now() / 1000)
-	},
-	updated: {
-		type: Number,
-		default: parseInt(Date.now() / 1000)
-	},
+var photoSchema = new mongoose.Schema({
 	deleted: {
 		type: Boolean,
 		default: false
@@ -31,5 +23,17 @@ module.exports = new mongoose.Schema({
 	longitude: Number,
 	path: String,
 	url: String,
-	uuid: String
+	uuid: String,
+	created: Number,
+	updated: Number
 });
+
+photoSchema.pre('save', function(next) {
+	now = parseInt(Date.now() / 1000);
+	this.updated = now;
+	if (!this.created) this.created = now;
+
+	next();
+});
+
+module.exports = photoSchema;

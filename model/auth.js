@@ -17,6 +17,28 @@ _.pGetOne = function(query, option) {
 	});
 };
 
+_.pCreate = function(user) {
+	console.log('Auth.pCreate');
+	query = {
+		token: _.createToken(),
+		userId: user.uuid
+	};
+
+	return new Promise(function(resolve, reject) {
+		new model(query)
+			.save(function(err, createdAuth) {
+				if (err) return reject(Error.mongoose(500, err));
+
+				if (createdAuth) {
+					if (!user) return resolve(createdAuth);
+					console.log(`After created: ${createdAuth}`);
+					user.token = createdAuth.token;
+					return resolve(user);
+				}
+			});
+	});
+};
+
 _.pUpdate = function(query, needNew, user) {
 	console.log('Auth.pUpdate');
 	query = query || {};
@@ -65,6 +87,19 @@ _.pRemove = function(userId) {
 			if (err) reject(Error.mongoose(500, err));
 			resolve();
 		});
+	});
+};
+
+_.removeExpiredObject = function(date) {
+	var query = {
+		expired: {
+			$lte: date
+		}
+	};
+	model.remove(query, function(err, res) {
+		if (err) console.error(err);
+		console.log(res.result.n);
+		return true;
 	});
 };
 

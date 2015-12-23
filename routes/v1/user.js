@@ -45,7 +45,7 @@ router.post('/', function(req, res, next) {
 		password: User.toHashedPassword(req.body.password)
 	};
 	User.pCreate(query)
-		.then(user => Auth.pUpdate(null, true, user))
+		.then(user => Auth.pCreate(user))
 		.then(user => User.pipeSuccessRender(req, res, user))
 		.catch(error => Error.pipeErrorRender(req, res, error));
 });
@@ -96,9 +96,7 @@ router.delete('/:name', function(req, res) {
 		.then(userId => Auth.pRemove(userId))
 		.then(userId => Plan.pSoftRemove(userId))
 		.then(userId => Photo.pSoftRemove(userId))
-		.then(function() {
-			return res.ok(201, {});
-		})
+		.then(() => res.ok(201, {}))
 		.catch(error => Error.pipeErrorRender(req, res, error));
 });
 

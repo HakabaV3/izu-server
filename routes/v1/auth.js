@@ -30,7 +30,7 @@ router.get('/me', function(req, res) {
 router.post('/', function(req, res) {
 	console.log(`[${req.method}] ${req.baseUrl}`);
 	User.pSignIn(req.body.name, User.toHashedPassword(req.body.password))
-		.then(user => Auth.pUpdate(null, true, user))
+		.then(user => Auth.pCreate(user))
 		.then(user => User.pipeSuccessRender(req, res, user))
 		.catch(error => Error.pipeErrorRender(req, res, error));
 });
